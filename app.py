@@ -2,13 +2,13 @@
 from flask import Flask, request, jsonify
 import os
 import logging
-import telegram
+from telegram import Bot
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 app = Flask(__name__)
 TOKEN = os.getenv("BOT_TOKEN")
-bot = telegram.Bot(token=TOKEN)
+bot = Bot(token=TOKEN)
 
 @app.route('/' + TOKEN, methods=['POST'])
 def getMessage():
