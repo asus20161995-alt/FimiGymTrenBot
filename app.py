@@ -1,7 +1,10 @@
 
 from flask import Flask, request, jsonify
 import os
+import logging
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 app = Flask(__name__)
 TOKEN = os.getenv("BOT_TOKEN")
 bot = telegram.Bot(token=TOKEN)
