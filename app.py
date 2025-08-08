@@ -1,43 +1,51 @@
-from flask import Flask, request
-import os
-import logging
-from telegram import Bot
+try:
+                ml = int(t.split()[1])
+                add_log("water_ml", ml)
+                bot.send_message(chat_id, f"Вода записана: +{ml} мл 💧")
+            except Exception:
+                bot.send_message(chat_id, "Формат: /вода 250")
+        elif t.startswith("/вес"):
+            try:
+                kg = float(t.split()[1].replace(",", "."))
+                add_log("weight", kg)
+                bot.send_message(chat_id, f"Вес записан: {kg} кг ✅")
+            except Exception:
+                bot.send_message(chat_id, "Формат: /вес 88.6")
+        elif t in ("/сегодня", "сегодня"):
+            bot.send_message(chat_id, training_today_text(), reply_markup=kb_training(), parse_mode="Markdown")
+        else:
+            bot.send_message(chat_id, "Команда получена. Доступно: /сегодня, /steps N, /вода ML, /вес KG")
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(name)
-
-app = Flask(name)
-
-TOKEN = os.getenv("BOT_TOKEN")
-if not TOKEN:
-    raise RuntimeError("Переменная окружения BOT_TOKEN не задана")
-bot = Bot(token=TOKEN)
-
-@app.route("/" + TOKEN, methods=["POST"])
-def webhook():
-    data = request.get_json(force=True, silent=True) or {}
-    msg = data.get("message") or {}
-    chat = msg.get("chat") or {}
-    chat_id = chat.get("id")
-    text = (msg.get("text") or "").strip()
-
-    if not chat_id:
-        return "ok"
-
-    # Простая логика ответов — расширим позже
-    if text.lower() in ("/start", "старт", "привет"):
-        bot.send_message(chat_id=chat_id, text=(
-            "Привет! Я FimiGymTrenBot. "
-            "Напиши 'прогресс' — покажу пример ответа. "
-            "Полная программа и напоминания подключатся после деплоя. 💪"
-        ))
-    elif text.lower() == "прогресс":
-        bot.send_message(chat_id=chat_id, text="Прогресс: держим курс на гранит 💎")
-    else:
-        bot.send_message(chat_id=chat_id, text="Команда принята. Скоро всё автоматизируем.")
+    elif cbq:
+        chat_id = cbq["message"]["chat"]["id"]
+        mid = cbq["message"]["message_id"]
+        data = cbq.get("data", "")
+        if data == "train:done":
+            mark_done("training_done")
+            bot.edit_message_text("Тренировка отмечена ✅", chat_id, mid)
+        elif data == "steps:done":
+            mark_done("steps_done_flag")
+            bot.edit_message_text("Ходьба за день отмечена 👣", chat_id, mid)
+        elif data.startswith("water:+"):
+            ml = 250 if data.endswith("250") else 500
+            add_log("water_ml", ml)
+            bot.edit_message_text(f"Вода: +{ml} мл 💧", chat_id, mid)
+        elif data.startswith("supp:"):
+            kind = data.split(":", 1)[1]
+            s = load_state()
+            day = today_key()
+            s.setdefault(day, {}).setdefault("supp", []).append(kind)
+            save_state(s)
+            bot.edit_message_text("💊 Приём добавки отмечен", chat_id, mid)
+        # answer callback
+        try:
+            requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/answerCallbackQuery",
+                          data={"callback_query_id": cbq["id"]}, timeout=10)
+        except Exception:
+            pass
 
     return "ok"
 
 @app.route("/", methods=["GET"])
-def index():
-    return "FimiGymTrenBot OK"
+def root():
+    return "FimiGymTrenBot up"
