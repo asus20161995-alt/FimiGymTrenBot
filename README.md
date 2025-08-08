@@ -1,16 +1,21 @@
-# FimiGymTrenBot (Render-ready)
+# FimiGymTrenBot (minimal, stable)
 
-## Переменные окружения (Render → Environment)
-- BOT_TOKEN — токен бота (обязателен)
-- START_DATE — дата старта (YYYY-MM-DD), напр. 2025-08-09
-- TIMEZONE — напр. Europe/Moscow
-- (опц.) CHAT_ID — жёстко закрепить получателя
-- (опц.) WEBHOOK_URL — если нужен кастомный URL (иначе возьмётся RENDER_EXTERNAL_URL)
+Телеграм-бот для учёта воды, веса, шагов, тренировок и добавок.
+Без сторонних Telegram-библиотек — только `Flask` + `requests`. Это делает развёртывание на Render максимально стабильным.
 
-## Render
-- Build Command: pip install -r requirements.txt
-- Start Command: gunicorn app:app
-
-После деплоя бот сам выставит webhook на <RENDER_EXTERNAL_URL>/<BOT_TOKEN>.
-Можно вручную открыть /setwebhook.
-Команды: /start, /сегодня, /steps N, /вода ML, /вес KG.
+## Быстрый старт на Render
+1) Создай репозиторий и загрузите эти 4 файла: `app.py`, `requirements.txt`, `Procfile`, `README.md`.
+2) На render.com → New Web Service → привяжи репозиторий.
+3) Настройки:
+   - Runtime: Python 3
+   - Start Command: (оставь пустым, Render возьмёт из Procfile)
+   - Instance Type: Free
+4) Env Vars:
+   - `BOT_TOKEN` = токен бота от BotFather
+   - `WEBHOOK_PATH` = `webhook` (по умолчанию)
+   - `WEBHOOK_URL` = публичный URL твоего сервиса на Render + `/webhook`  
+     пример: `https://fimagymtrenbot.onrender.com/webhook`
+5) Deploy.
+6) Когда сервис «Live», открой в браузере:  
+   `https://<твой-домен>.onrender.com/set_webhook` — зарегистрировать вебхук.
+7) В Telegram напиши боту `/start`.
